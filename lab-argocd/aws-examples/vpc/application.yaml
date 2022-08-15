@@ -8,6 +8,6 @@ spec:
     server: https://kubernetes.default.svc
   project: uxp-lab
   source:
-    path: /lab-argocd/aws-examples/vpc
+    path: lab-argocd/aws-examples/vpc
     repoURL: https://github.com/upbound/uxp-training
     targetRevision: HEAD
