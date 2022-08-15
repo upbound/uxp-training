@@ -15,4 +15,4 @@ metadata:
   name: aws-config
 spec:
   args: ["-d"]
-  replicas: 0
+  replicas: 1
