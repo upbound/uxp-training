@@ -1,0 +1,55 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: compositepostgresqlinstances.database.example.org
+  annotations:
+    uxp-guide: getting-started
+spec:
+  group: database.example.org
+  names:
+    kind: CompositePostgreSQLInstance
+    plural: compositepostgresqlinstances
+  claimNames:
+    kind: PostgreSQLInstance
+    plural: postgresqlinstances
+  connectionSecretKeys:
+    - username
+    - password
+    - endpoint
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              parameters:
+                type: object
+                properties:
+                  storageGB:
+                    type: integer
+                  passwordSecretName:
+                    type: string
+                  class:
+                    type: string
+                    enum: [small, medium, large]
+                required:
+                  - storageGB
+                  - passwordSecretName
+            required:
+              - parameters
+          status:
+            description: A Status represents the observed state
+            properties:
+              instance:
+                description: Freeform field containing status information from RDS Instance
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+            type: object
+
+
+

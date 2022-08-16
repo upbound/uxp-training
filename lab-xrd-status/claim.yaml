@@ -1,0 +1,15 @@
+apiVersion: database.example.org/v1alpha1
+kind: PostgreSQLInstance
+metadata:
+  name: my-db
+  namespace: default
+spec:
+  parameters:
+    storageGB: 20
+    passwordSecretName: getting-started-db-pass
+    class: small # small, medium, large
+  compositionSelector:
+    matchLabels:
+      uxp-guide: getting-started
+  writeConnectionSecretToRef:
+    name: db-conn

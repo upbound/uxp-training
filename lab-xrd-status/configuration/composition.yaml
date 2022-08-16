@@ -1,0 +1,249 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: vpcpostgresqlinstances.aws.database.example.org
+  labels:
+    uxp-guide: getting-started
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: database.example.org/v1alpha1
+    kind: CompositePostgreSQLInstance
+  resources:
+    - name: vpc
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: VPC
+        spec:
+          forProvider:
+            region: us-east-1
+            cidrBlock: 192.168.0.0/16
+            enableDnsSupport: true
+            enableDnsHostnames: true
+    - name: subnet-a
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: us-east-1a
+        spec:
+          forProvider:
+            region: us-east-1
+            cidrBlock: 192.168.64.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: us-east-1a
+    - name: subnet-b
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: us-east-1b
+        spec:
+          forProvider:
+            region: us-east-1
+            cidrBlock: 192.168.128.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: us-east-1b
+    - name: subnet-c
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: us-east-1c
+        spec:
+          forProvider:
+            region: us-east-1
+            cidrBlock: 192.168.192.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: us-east-1c
+    - name: dbsubnetgroup
+      base:
+        apiVersion: rds.aws.upbound.io/v1beta1
+        kind: SubnetGroup
+        spec:
+          forProvider:
+            region: us-east-1
+            description: An excellent formation of subnetworks.
+            subnetIdSelector:
+              matchControllerRef: true
+    - name: internetgateway
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: InternetGateway
+        spec:
+          forProvider:
+            region: us-east-1
+            vpcIdSelector:
+              matchControllerRef: true
+    - name: routetable
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: RouteTable
+        spec:
+          forProvider:
+            region: us-east-1
+            vpcIdSelector:
+              matchControllerRef: true
+    - name: route
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Route
+        spec:
+          forProvider:
+            region: us-east-1
+            destinationCidrBlock: 0.0.0.0/0
+            routeTableIdSelector:
+              matchControllerRef: true
+            gatewayIdSelector:
+              matchControllerRef: true
+    - name: routetableassociation-1a
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: RouteTableAssociation
+        spec:
+          forProvider:
+            region: us-east-1
+            routeTableIdSelector:
+              matchControllerRef: true
+            subnetIdSelector:
+               matchLabels:
+                 zone: us-east-1a
+    - name: routetableassociation-1b
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: RouteTableAssociation
+        spec:
+          forProvider:
+            region: us-east-1
+            routeTableIdSelector:
+              matchControllerRef: true
+            subnetIdSelector:
+               matchLabels:
+                 zone: us-east-1b
+    - name: routetableassociation-1c
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: RouteTableAssociation
+        spec:
+          forProvider:
+            region: us-east-1
+            routeTableIdSelector:
+              matchControllerRef: true
+            subnetIdSelector:
+               matchLabels:
+                 zone: us-east-1c
+    - name: securitygroup
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: SecurityGroup
+        spec:
+          forProvider:
+            region: us-east-1
+            vpcIdSelector:
+              matchControllerRef: true
+            name: uxp-getting-started
+            description: Allow access to PostgreSQL
+    - name: securitygrouprule
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: SecurityGroupRule
+        spec:
+          forProvider:
+            region: us-east-1
+            type: ingress
+            fromPort: 5432
+            toPort: 5432
+            protocol: tcp
+            cidrBlocks:
+              - 0.0.0.0/0
+            securityGroupIdSelector:
+              matchControllerRef: true
+    - name: rdsinstance
+      base:
+        apiVersion: rds.aws.upbound.io/v1beta1
+        kind: Instance
+        spec:
+          forProvider:
+            region: us-east-1
+            dbSubnetGroupNameSelector:
+              matchControllerRef: true
+            vpcSecurityGroupIDSelector:
+              matchControllerRef: true
+            instanceClass: db.t2.small
+            username: masteruser
+            engine: postgres
+            engineVersion: "12.10"
+            skipFinalSnapshot: true
+            publiclyAccessible: true
+            passwordSecretRef:
+              key: password
+              namespace: upbound-system
+          writeConnectionSecretToRef:
+            namespace: upbound-system
+      patches:
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-postgresql"
+        - fromFieldPath: "spec.parameters.storageGB"
+          toFieldPath: "spec.forProvider.allocatedStorage"
+        - fromFieldPath: "spec.parameters.passwordSecretName"
+          toFieldPath: "spec.forProvider.passwordSecretRef.name"
+        - fromFieldPath: "spec.parameters.class"
+          toFieldPath: "spec.forProvider.instanceClass"
+          transforms:
+          - type: map
+            map:
+              small: db.t2.small
+              medium: db.t2.medium
+              large: db.t3.medium
+        - type: ToCompositeFieldPath
+          fromFieldPath: "status.atProvider"
+          toFieldPath: "status.instance"
+      connectionDetails:
+        - name: username
+          fromFieldPath: spec.forProvider.username
+        - name: password
+          fromConnectionSecretKey: attribute.password
+        - name: endpoint
+          fromFieldPath: status.atProvider.endpoint
+    - name: iampolicy
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: Policy
+      patches:
+        - fromFieldPath: "metadata.name"
+          toFieldPath: "spec.forProvider.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-postgresql"
+        - fromFieldPath: "status.instance.arn"
+          toFieldPath: "spec.forProvider.policy"
+          transforms:
+            - type: string
+              string:
+                fmt: |
+                  {
+                     "Version": "2012-10-17",
+                     "Statement": [
+                        {
+                           "Effect": "Allow",
+                           "Action": [
+                               "rds-db:connect"
+                           ],
+                           "Resource": [
+                               "%s"
+                           ]
+                        }
+                     ]
+                  }
+
