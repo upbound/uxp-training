@@ -50,6 +50,3 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object
-
-
-
