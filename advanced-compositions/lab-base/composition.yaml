@@ -1,0 +1,47 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+
+  name: example
+
+  labels:
+    # An optional convention is to include a label of the XRD. This allows
+    # easy discovery of compatible Compositions.
+
+    crossplane.io/xrd: xpostgresqlinstances.database.example.org
+
+    # The following label marks this Composition for GCP. This label can 
+    # be used in 'compositionSelector' in an XR or Claim.
+    provider: gcp
+
+    # Other labels can be added to match.
+spec:
+
+  # Each Composition must declare that it is compatible with a particular type
+  # of Composite Resource using its 'compositeTypeRef' field. The referenced
+  # version must be marked 'referenceable' in the XRD that defines the XR.
+
+  # Multiple Compositions can refer to the same Composite Resource.  
+ compositeTypeRef:
+    apiVersion: database.example.org/v1alpha1
+    kind: XPostgreSQLInstance
+
+  # When an XR is created in response to a claim Crossplane needs to know where
+  # it should create the XR's connection secret. This is configured using the
+  # 'writeConnectionSecretsToNamespace' field.
+
+  # Upbound's UXP usually uses the  upbound-system namespace.
+  # CNCF Crossplane is installed to the crossplane-system namespace.
+
+  writeConnectionSecretsToNamespace: upbound-system
+
+  # Each Composition must specify at least one composed resource template. In
+  # this case the Composition tells Crossplane that it should create, update, or
+  # delete a CloudSQLInstance whenever someone creates, updates, or deletes an
+  # XPostgresSQLInstance.
+
+  # The next section is a list of resources that is part of the composition. 
+  # We'll be filling these in during the next labs. 
+
+  resources:
+  - name: toBeDefined 
