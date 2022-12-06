@@ -1,0 +1,14 @@
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: MainRouteTableAssociation
+        spec:
+          forProvider:
+            region: us-west-2
+            routeTableIdSelector:
+              matchControllerRef: true
+            vpcIdSelector:
+              matchControllerRef: true
+      name: mainRouteTableAssociation
+      patches:
+        - type: PatchSet
+          patchSetName: network-id

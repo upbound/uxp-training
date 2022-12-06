@@ -1,0 +1,24 @@
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: us-west-2a
+            access: public
+        spec:
+          forProvider:
+            region: us-west-2
+            mapPublicIpOnLaunch: true
+            cidrBlock: 192.168.0.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: us-west-2a
+            tags:
+              kubernetes.io/role/elb: "1"
+      name: subnet-public-west-2a
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+        - type: ToCompositeFieldPath
+          fromFieldPath: metadata.annotations[crossplane.io/external-name]
+          toFieldPath: status.subnetIds[0]

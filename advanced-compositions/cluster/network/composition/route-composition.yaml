@@ -1,0 +1,15 @@
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Route
+        spec:
+          forProvider:
+            region: us-west-2
+            destinationCidrBlock: 0.0.0.0/0
+            gatewayIdSelector:
+              matchControllerRef: true
+            routeTableIdSelector:
+              matchControllerRef: true
+      name: route
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
