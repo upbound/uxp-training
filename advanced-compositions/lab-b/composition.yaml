@@ -1,0 +1,47 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnetworks.aws.platformref.upbound.io
+  labels:
+    provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: aws.platformref.upbound.io/v1alpha1
+    kind: XNetwork
+  patchSets:
+  - name: network-id
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.id
+      toFieldPath: metadata.labels[networks.aws.platformref.upbound.io/network-id]
+  resources:
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: VPC
+        spec:
+          forProvider:
+            region: eu-west-1
+            cidrBlock: 192.168.0.0/16
+            enableDnsSupport: true
+            enableDnsHostnames: true
+            tags:
+              Owner: Platform Team
+              Name: platformref-vpc
+      name: platformref-vpc
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: InternetGateway
+        spec:
+          forProvider:
+            region: eu-west-1
+            #
+            # The InternetGateway requires a VPC. 
+            # How do we refer to the VPC defined above? 
+      name: gateway
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
