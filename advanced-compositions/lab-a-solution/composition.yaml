@@ -1,0 +1,42 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnetworks.aws.platformref.upbound.io
+  labels:
+    provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: aws.platformref.upbound.io/v1alpha1
+    kind: XNetwork
+ 
+   # patchSets contain patches that can be shared among managed resources
+  patchSets:
+  - name: network-id
+    # this common patch takes the id that the user sets and creates a Kubernetes label
+    # note how we use [] brackets to specify the label key when it has special characters
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.id
+      toFieldPath: metadata.labels[networks.aws.platformref.upbound.io/network-id]
+  resources:
+    # Every resource in a composition should have three items defined:
+    #    - base: contains the Managed Resource
+    #      name: name of the resource to identity it. Recommended
+    #      patches: patches to apply to the managed resource. 
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: VPC
+        spec:
+          forProvider:
+            region: us-west-2
+            cidrBlock: 192.168.0.0/16
+            enableDnsSupport: true
+            enableDnsHostnames: true
+            tags:
+              Owner: Platform Team
+              Name: platformref-vpc
+      name: platformref-vpc
+      patches: 
+        - type: PatchSet
+          patchSetName: network-id
