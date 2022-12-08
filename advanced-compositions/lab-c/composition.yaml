@@ -1,0 +1,137 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnetworks.aws.platformref.upbound.io
+  labels:
+    provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: aws.platformref.upbound.io/v1alpha1
+    kind: XNetwork
+  patchSets:
+  - name: network-id
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.id
+      toFieldPath: metadata.labels[networks.aws.platformref.upbound.io/network-id]
+  resources:
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: VPC
+        spec:
+          forProvider:
+            region: eu-west-1
+            cidrBlock: 192.168.0.0/16
+            enableDnsSupport: true
+            enableDnsHostnames: true
+            tags:
+              Owner: Platform Team
+              Name: platformref-vpc
+      name: platformref-vcp
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: InternetGateway
+        spec:
+          forProvider:
+            region: eu-west-1
+            vpcIdSelector:
+              matchControllerRef: true
+      name: gateway
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: eu-west-1a
+            access: public
+        spec:
+          forProvider:
+            region: eu-west-1
+            mapPublicIpOnLaunch: true
+            cidrBlock: 192.168.0.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: eu-west-1a
+            tags:
+              kubernetes.io/role/elb: "1"
+      name: subnet-public-west-2a
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+
+          # We take the external-name of each subnet (which is the
+          # AWS subnet Id and return it to status. 
+          # Note that each subnet ID goes to a specific array index
+        - type: ToCompositeFieldPath
+          fromFieldPath: ## Fill me in with the external name
+          toFieldPath: ## patch to array index 0 of the status.SubnetIds
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: eu-west-1b
+            access: public
+        spec:
+          forProvider:
+            region: eu-west-1
+            mapPublicIpOnLaunch: true
+            cidrBlock: 192.168.64.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: eu-west-1b
+            tags:
+              kubernetes.io/role/elb: "1"
+      name: subnet-public-west-2b
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+          
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: eu-west-1a
+            access: private
+        spec:
+          forProvider:
+            region: eu-west-1
+            cidrBlock: 192.168.128.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: eu-west-1a
+            tags:
+              kubernetes.io/role/internal-elb: "1"
+      name: subnet-private-west-2a
+      patches:
+        - type: PatchSet
+          patchSetName: network-id
+
+    - base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels:
+            zone: eu-west-1b
+            access: private
+        spec:
+          forProvider:
+            region: eu-west-1
+            cidrBlock: 192.168.192.0/18
+            vpcIdSelector:
+              matchControllerRef: true
+            availabilityZone: eu-west-1b
+            tags:
+              kubernetes.io/role/internal-elb: "1"
+      name: subnet-private-west-2b
+      patches:
+        - type: PatchSet
+          patchSetName: network-id

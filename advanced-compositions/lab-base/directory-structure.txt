@@ -1,0 +1,9 @@
+platform-ref-aws
+├── LICENSE     Usually Apache 2.0 License
+├── Makefile    Used for building, testing and pushing packages 
+├── README.md
+├── build       Upbound common build git submodule  
+├── examples    Examples 
+├── package     Contains XRD, Composition and Package Manifests
+└── test        Uptest support Files https://github.com/upbound/uptest
+
