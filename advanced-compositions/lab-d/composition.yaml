@@ -9,8 +9,8 @@ spec:
     kind: XCluster
   resources:
     - base:
-        apiVersion: aws.platformref.upbound.io/v1alpha1
-        kind: XNetwork
+        apiVersion: # Fill in the custom platform API Group
+        kind: # Fill in the Xnetwork kind
       patches:
         - fromFieldPath: spec.id
           toFieldPath: spec.id
@@ -26,8 +26,8 @@ spec:
             fromFieldPath: Required
       name: compositeNetworkEKS
     - base:
-        apiVersion: aws.platformref.upbound.io/v1alpha1
-        kind: XEKS
+        apiVersion: # Fill in the custom platform API Group
+        kind: # Fill in the Composite EKS kind
       connectionDetails:
         - fromConnectionSecretKey: kubeconfig
       name: compositeClusterEKS
@@ -57,8 +57,8 @@ spec:
           policy:
             fromFieldPath: Required
     - base:
-        apiVersion: aws.platformref.upbound.io/v1alpha1
-        kind: XServices
+        apiVersion: # Fill in the custom platform API Group
+        kind: # Fill in the Composite Services Kind
       name: compositeClusterServices
       patches:
         - fromFieldPath: spec.id
