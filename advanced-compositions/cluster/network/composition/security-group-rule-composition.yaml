@@ -1,0 +1,19 @@
+    - name: securityGroupRulePostgres
+      base:
+        apiVersion: ec2.aws.upbound.io/v1beta1
+        kind: SecurityGroupRule
+        spec:
+          forProvider:
+            region: us-west-2
+            type: ingress
+            fromPort: 5432
+            toPort: 5432
+            protocol: tcp
+            cidrBlocks:
+              - 0.0.0.0/0
+            securityGroupIdSelector:
+              matchControllerRef: true
+            description: Everywhere
+      patches:
+        - type: PatchSet
+          patchSetName: network-id

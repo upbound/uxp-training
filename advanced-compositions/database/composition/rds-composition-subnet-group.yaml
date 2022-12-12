@@ -1,0 +1,12 @@
+    - name: compositeSQLInstanceDbSubnetGroup
+      base:
+        apiVersion: rds.aws.upbound.io/v1beta1
+        kind: SubnetGroup
+        spec:
+          forProvider:
+            region: us-west-2
+            description: An excellent formation of subnetworks.
+          deletionPolicy: Delete
+      patches:
+        - fromFieldPath: spec.parameters.clusterRef.id
+          toFieldPath: spec.forProvider.subnetIdSelector.matchLabels[networks.aws.platformref.upbound.io/network-id]
